@@ -68,22 +68,28 @@ int ku_msgget(int key,int msgflg)
 //message create
 //printk("msgflg %d ku_ipc %d ref",msgflg,KU_IPC_CREAT,msg_lists[key].ref);
 
-if((msgflg&KU_IPC_CREAT)&&(msg_lists[key].ref==0))
+if(msgflg==0)
 {
+if(msg_lists[key].ref==1)return key;
+else return -1;
+}
+
+else if(msgflg==KU_IPC_CREAT)
+{
+    if(msg_lists[key].ref==1) return key;
+    else{
+        msg_lists[key].ref++;
+        return key;
+    }
+    
+}
+else{
+if(msg_lists[key].ref==1) return-1;
 
 msg_lists[key].ref++;
 return key;
-}
-if(msgflg&KU_IPC_EXCL)
-{
-    if(msg_lists[key].ref==0)
-    {
-    msg_lists[key].ref++;
-    return key;
-    }
-}
 
-return -1;
+}
 
 }
 
@@ -256,7 +262,7 @@ switch(cmd){
                 break;
         case KU_MSGGET:
                 ret=ku_msgget(user_buf->msgqid,user_buf->msgflg);
-                copy_to_user(&user_buf->return_val,&ret,sizeof(int));
+                copy_to_user(&user_buf->msgqid,&ret,sizeof(int));
                 break;
         case KU_MSGCLOSE:
                 ret=ku_msgclose(user_buf->msgqid);

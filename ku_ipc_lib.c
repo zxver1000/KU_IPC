@@ -28,15 +28,13 @@ fd=open("/dev/ku_ipc_dev",O_RDWR);
 
 
 ioctl(fd,KU_MSGGET,&msg);
-
+printf("return val %d \n",msg.msgqid);
 if(msg.return_val==-1) 
 {
-  printf("fail\n");
 return -1;
 }
 
-printf("success key\n");
-  return key;
+  return msg.msgqid;
 }
 
 int ku_msgclose(int msqid)
@@ -65,8 +63,6 @@ int ku_msgrcv(int msqid,void *msgp,int msgsz,long msgtyp,int msgflg)
  rcv_msg.msgsz=msgsz;
  rcv_msg.msgtype=msgtyp;
  rcv_msg.msgflg=msgflg;
-
-
 ioctl(fd,KU_MSGRCV,&rcv_msg);
 
 
@@ -113,29 +109,39 @@ struct msgs msg={
 };
 
 int n;
-printf("choose msqid\n");
-scanf("%d",&n);
-msg.msgqid=n;
+
 int num;
-printf("choose flag 1.KU_IPC_CREAT 2.KU_IPC_EXCL :\n");
-scanf("%d",&num);
 int flags;
-if(num==1) flags=KU_IPC_CREAT; 
-else if(num==2) flags=KU_IPC_EXCL;
-else return-1;
-msg.msgflg=flags;
 int get;
 struct msg_buf snds;
 struct msg_buf rcvs;
 int val;
-get=ku_msgget(msg.msgqid,msg.msgflg);
-while(get==-1)
+while(1)
 {
-  printf("it is key not available now choose different key\n");
-  scanf("%d",&msg.msgqid);
+
+printf("choose msqid\n");
+scanf("%d",&n);
+msg.msgqid=n;
+
+printf("choose flag 1.KU_IPC_CREAT 2.IPC_CRETAE|IPC_EXCL 3.else 0:\n");
+scanf("%d",&num);
+
+if(num==1) flags=KU_IPC_CREAT; 
+else if(num==2) flags=KU_IPC_CREAT|KU_IPC_EXCL;
+else flags=0;
+msg.msgflg=flags;
+
+
+
 get=ku_msgget(msg.msgqid,msg.msgflg);
+if(get==-1)
+{
+
+  printf("it is key not available now choose different key\n");
 }
-ku_msgclose(msg.msgqid);
+else break;
+}
+
 char snd_msg_buf[128];
 
 
@@ -187,7 +193,7 @@ else{
   //break;
 }
 
-//ku_msgclose(msg.msgqid);
+ku_msgclose(msg.msgqid);
 close(fd);
 
 return 1;
